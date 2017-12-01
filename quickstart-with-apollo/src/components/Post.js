@@ -5,8 +5,7 @@ import gql from 'graphql-tag'
 
 import User from './User';
 
-const Post = ({itemId: id, title, description, author}) => {
-  console.log({author});
+const Post = ({title, description, author}) => {
   return (
     <div>
       <div>{title}</div>
@@ -48,27 +47,3 @@ export default graphql(
     }),
   },
 )(Post);
-
-/* `query LastFivePosts {
-  allPosts(last: 5) {
-    ...PostFragment
-  }
-}
-
-fragment PostFragment on Post {
-  description,
-  title,
-  ...CommentsFragment,
-}
-
-fragment CommentsFragment on Post {
-  comments {
-    ...CommentFragment
-  }
-}
-
-fragment CommentFragment on Comment {
-  id,
-  isPublished,
-  text,
-}` */

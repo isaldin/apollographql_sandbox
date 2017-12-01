@@ -15,9 +15,10 @@ const RecentPosts = ({data}) => {
 const LAST_POSTS_QUERY = gql`
   query LastFivePosts {
     allPosts(last: 5) {
-      id,
+      ...PostFragment
     }
   }
+  ${Post.fragments.post}
 `;
 
 export default graphql(LAST_POSTS_QUERY)(RecentPosts);

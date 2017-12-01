@@ -1,28 +1,74 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
+import { graphql } from 'react-apollo'
+import gql from 'graphql-tag'
 
-export default class Post extends React.Component {
+import User from './User';
 
-  render() {
-    return (
-      <Link
-        className='bg-white ma3 box post flex flex-column no-underline br2'
-        to={`/post/${this.props.post.id}`}
-      >
-        <div
-          className='image'
-          style={{
-            backgroundImage: `url(${this.props.post.imageUrl})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            paddingBottom: '100%',
-          }}
-        />
-        <div className='flex items-center black-80 fw3 description'>
-          {this.props.post.description}
-        </div>
-      </Link>
-    )
+const Post = ({itemId: id, title, description, author}) => {
+  console.log({author});
+  return (
+    <div>
+      <div>{title}</div>
+      <div>{description}</div>
+      {author && <div>{author.firstName}</div>}
+      <hr/>
+    </div>
+  );
+};
+
+Post.fragments = {
+  post: gql`
+    fragment PostFragment on Post {
+      id,
+      description,
+      title,
+    }
+  `,
+};
+
+const POST_QUERY = gql`
+  query PostQuery($id: ID) {
+    Post(id: $id) {
+      ...PostFragment,
+      author {
+        ...UserShortInfo,
+      },
+    }
   }
+  ${Post.fragments.post}
+  ${User.fragments.shortInfo}
+`;
 
+export default graphql(
+  POST_QUERY, {
+    options: ({itemId}) => ({variables: {id: itemId}}),
+    props: ({data: {loading, Post}}) => ({
+      ...Post,
+    }),
+  },
+)(Post);
+
+/* `query LastFivePosts {
+  allPosts(last: 5) {
+    ...PostFragment
+  }
 }
+
+fragment PostFragment on Post {
+  description,
+  title,
+  ...CommentsFragment,
+}
+
+fragment CommentsFragment on Post {
+  comments {
+    ...CommentFragment
+  }
+}
+
+fragment CommentFragment on Comment {
+  id,
+  isPublished,
+  text,
+}` */

@@ -26,7 +26,7 @@ Post.fragments = {
   `,
 };
 
-const POST_QUERY = gql`
+export const POST_QUERY = gql`
   query PostQuery($id: ID) {
     Post(id: $id) {
       ...PostFragment,

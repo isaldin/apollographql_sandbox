@@ -2,6 +2,9 @@ import React, {Component} from 'react';
 import { graphql } from 'react-apollo';
 import gql from 'graphql-tag';
 
+import Post from './Post';
+import {USER_POSTS_COUNT_QUERY} from './User';
+
 class CreatePost extends Component {
   constructor(props) {
     super(props);
@@ -13,9 +16,8 @@ class CreatePost extends Component {
 
   handlePost = async () => {
     const {title, description} = this.state;
-    const {createPostMutation, authorId} = this.props;
-    console.log({title, description});
-    await createPostMutation({variables: {title, description, authorId}});
+    const {submit, authorId} = this.props;
+    await submit({title, description, authorId});
     this.setState({title: '', description: ''});
   };
 
@@ -50,21 +52,61 @@ class CreatePost extends Component {
   }
 }
 
+const POSTS_QUERY = gql`
+  query AllPostQuery {
+    allPosts(last: 5) {
+      ...PostFragment
+    }
+  }
+  ${Post.fragments.post}
+`;
+
 const CREATE_POST_MUTATION = gql`
   mutation CreatePostMutation($description: String!, $title: String!, $authorId: ID) {
     createPost(description:$description, title:$title, authorId:$authorId) {
-      id,
-      description,
-      title,
+      ...PostFragment
     }
   }
+  ${Post.fragments.post}
 `;
 
 export default graphql(CREATE_POST_MUTATION, {
-  name: 'createPostMutation',
+  props: ({ownProps, mutate}) => {
+    return {
+      submit: ({title, description, authorId}) => mutate({
+        variables: {title, description, authorId},
+        optimisticResponse: {
+          __typename: 'Mutation',
+          createPost: {
+            __typename: 'Post',
+            id: 'asdfasdf',
+            description,
+            title,
+            author: {
+              id: authorId,
+            },
+
+          },
+        },
+        update: (proxy, {data: {createPost}}) => {
+          // update last 5 posts
+          const allPostsData = proxy.readQuery({query: POSTS_QUERY});
+          const recentPosts = allPostsData.allPosts;
+          recentPosts.shift();
+          recentPosts.push(createPost);
+          proxy.writeQuery({query: POSTS_QUERY, data: {allPosts: recentPosts}});
+
+          // increment count of posts for current user
+          const postsCount = proxy.readQuery({query: USER_POSTS_COUNT_QUERY, variables: {userId: authorId}});
+          postsCount.User._postsMeta.count += 1;
+          proxy.writeQuery({query: USER_POSTS_COUNT_QUERY, data: postsCount, variables: {userId: authorId}});
+        },
+      }),
+    };
+  },
   options: {
     refetchQueries: [
-      'LastFivePosts',
+      //'LastFivePosts',
     ],
   },
 })(CreatePost);

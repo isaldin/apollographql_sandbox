@@ -33,9 +33,10 @@ const USER_INFO_QUERY = gql`
   ${User.fragments.shortInfo}
 `;
 
-const USER_POSTS_COUNT_QUERY = gql`
+export const USER_POSTS_COUNT_QUERY = gql`
   query UserPostsCount($userId:ID!) {
     User(id:$userId) {
+      id,
       _postsMeta {
         count
       }

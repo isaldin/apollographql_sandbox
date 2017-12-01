@@ -12,7 +12,7 @@ const RecentPosts = ({data}) => {
     : allPosts.map(item => <Post key={item.id} itemId={item.id}/>);
 };
 
-const LAST_POSTS_QUERY = gql`
+export const LAST_POSTS_QUERY = gql`
   query LastFivePosts {
     allPosts(last: 5) {
       ...PostFragment

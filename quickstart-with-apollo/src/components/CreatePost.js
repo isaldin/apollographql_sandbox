@@ -4,6 +4,7 @@ import gql from 'graphql-tag';
 
 import Post from './Post';
 import {USER_POSTS_COUNT_QUERY} from './User';
+import {LAST_POSTS_QUERY} from './RecentPosts';
 
 class CreatePost extends Component {
   constructor(props) {
@@ -52,15 +53,6 @@ class CreatePost extends Component {
   }
 }
 
-const POSTS_QUERY = gql`
-  query AllPostQuery {
-    allPosts(last: 5) {
-      ...PostFragment
-    }
-  }
-  ${Post.fragments.post}
-`;
-
 const CREATE_POST_MUTATION = gql`
   mutation CreatePostMutation($description: String!, $title: String!, $authorId: ID) {
     createPost(description:$description, title:$title, authorId:$authorId) {
@@ -90,11 +82,11 @@ export default graphql(CREATE_POST_MUTATION, {
         },
         update: (proxy, {data: {createPost}}) => {
           // update last 5 posts
-          const allPostsData = proxy.readQuery({query: POSTS_QUERY});
+          const allPostsData = proxy.readQuery({query: LAST_POSTS_QUERY});
           const recentPosts = allPostsData.allPosts;
           recentPosts.shift();
           recentPosts.push(createPost);
-          proxy.writeQuery({query: POSTS_QUERY, data: {allPosts: recentPosts}});
+          proxy.writeQuery({query: LAST_POSTS_QUERY, data: {allPosts: recentPosts}});
 
           // increment count of posts for current user
           const postsCount = proxy.readQuery({query: USER_POSTS_COUNT_QUERY, variables: {userId: authorId}});
